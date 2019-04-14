@@ -2,6 +2,7 @@
 
 from joueur.base_ai import BaseAI
 from scipy.spatial import distance
+import random
 
 import math
 
@@ -109,10 +110,18 @@ class AI(BaseAI):
             elif unit.job.title == 'missileboat':
                 missileboats.append(unit)
         
-        print('number of transports: ', len(transports))
+        # print('number of transports: ', len(transports))
         if self.player.money > 150 and len(transports) < 3:
             self.player.home_base.spawn(self.player.home_base.x, self.player.home_base.y, 'transport')
+        elif self.player.money > 2300:
 
+            temp = random.randint(1, 6)
+            
+            if temp == 1:
+                tempName = 'transport'
+            else:
+                tempName = 'miner'
+            self.player.home_base.spawn(self.player.home_base.x, self.player.home_base.y,tempName)
 
         for transport in transports:
             x, y = 0, 0
@@ -122,7 +131,7 @@ class AI(BaseAI):
             else:
                 # means still has room to mine
                 # head to "target location" -> closer to the asteroid belt
-                print('transport.x: ', transport.x)
+                # print('transport.x: ', transport.x)
                 if transport.x > SUN_X:
                     # this is the right side
                     if transport.x >= MAX_ASTROID_BOUND:
@@ -150,21 +159,21 @@ class AI(BaseAI):
             else: 
                 # means still has room to mine
                 # head to "target location" -> closer to the asteroid belt
-                print('miner.x: ', miner.x)
+                # print('miner.x: ', miner.x)
                 if miner.x > SUN_X:
                     # this is the right side
-                    print('miner.x: ', miner.x)
+                    # print('miner.x: ', miner.x)
                     if miner.x < MAX_ASTROID_BOUND:
-                        print('looking for best asteroid -> right')
+                        # print('looking for best asteroid -> right')
                         x, y, body = findBestAsteroidforMiner(self.game.bodies, miner)
                         needMine = True 
-                        print('x:', x, '  y:', y)
+                        # print('x:', x, '  y:', y)
                     else:
                         x, y = getAdvanceCoords(miner, MAX_ASTROID_BOUND, SUN_Y)
                 else:                     
                     # this is the left side
                     if miner.x > MIN_ASTROID_BOUND:
-                        print('looking for best asteroid -> left')
+                        # print('looking for best asteroid -> left')
                         x, y, body = findBestAsteroidforMiner(self.game.bodies, miner)
                         needMine = True 
                     else:
@@ -174,11 +183,11 @@ class AI(BaseAI):
             miner.move(miner.x+x, miner.y+y)
             if needMine and body != None:
                 miner.mine(body)
-                print('asteroid has been mined!!!')
-                print(miner.genarium + miner.legendarium + miner.mythicite + miner.rarium)
+                # print('asteroid has been mined!!!')
+                # print(miner.genarium + miner.legendarium + miner.mythicite + miner.rarium)
 
-        if self.game.current_turn > 150:
-            quit = 4/0
+        # if self.game.current_turn > 150:
+        #     quit = 4/0
 
         return True
         # <<-- /Creer-Merge: runTurn -->>
@@ -187,23 +196,11 @@ class AI(BaseAI):
     # if you need additional functions for your AI you can add them here
     # <<-- /Creer-Merge: functions -->>
 
-# NOTE how to spawn a piece
-# call self.player.home_base.body.spawn(x, y, title)
-
-# def mod_x(player, val):
-#     """
-#     """
-#     if player.home_base.x < 1600:
-        # we're on the left side, so return val
-        # return val
-    # else:
-        #  return -val
-
 def dumpMaterials(transports, miner):
-    print('len(transports)', len(transports))
+    # print('len(transports)', len(transports))
     for transport in transports:
-        print(transport.x, MIN_ASTROID_BOUND, MAX_ASTROID_BOUND)
-        print(miner.x, (transport.genarium + transport.legendarium + transport.mythicite + transport.rarium))
+        # print(transport.x, MIN_ASTROID_BOUND, MAX_ASTROID_BOUND)
+        # print(miner.x, (transport.genarium + transport.legendarium + transport.mythicite + transport.rarium))
         if MIN_ASTROID_BOUND < transport.x and transport.x < MAX_ASTROID_BOUND:
             if not checkFullPayload(transport):
                 transport.transfer(miner, miner.genarium, 'genarium')
@@ -213,21 +210,14 @@ def dumpMaterials(transports, miner):
                 transport.transfer(miner, miner.mythicite, 'mythicite')
             if not checkFullPayload(transport):
                 transport.transfer(miner, miner.rarium, 'rarium')
-        print('transport dumpCheck:', (transport.genarium + transport.legendarium + transport.mythicite + transport.rarium))
-
-            
+        # print('transport dumpCheck:', (transport.genarium + transport.legendarium + transport.mythicite + transport.rarium))
 
 def getAdvanceCoords(unit, targetX, targetY):
-    # print('unit\t', unit.x, unit.y)
-    # print('target\t', targetX, targetY)
     xDiff = targetX - unit.x
     yDiff = targetY - unit.y
-    # print('diff:', xDiff, yDiff)
     theta = math.tan(float(yDiff)/float(xDiff))
-    # print('theta:', theta)
     moveToX = MAX_MOVE * math.cos(theta)
     moveToY = MAX_MOVE * math.sin(theta)
-    # print('moveTo:', moveToX, moveToY)
     if targetX < unit.x:
         moveToX *= -1
     return moveToX, moveToY
@@ -237,7 +227,7 @@ def checkFullPayload(unit):
 
 # given a list of bodies, return target x, target y
 def findBestAsteroidforMiner(bodies, miner):
-    print("Attempting to find Best")
+    # print("Attempting to find Best")
     # take a slice of the bodies so we dont move to the sun or our planet
     asteroids = bodies[3:len(bodies)]
     minerX = miner.x
@@ -266,8 +256,8 @@ def findBestAsteroidforMiner(bodies, miner):
 
     for asteroid in possibleTargets:
         #find the asteroid with the highest value, if equivalent, find the shorter distance one
-        print("amount of material",asteroid.amount)
-        print("material type", asteroid.material_type)
+        # print("amount of material",asteroid.amount)
+        # print("material type", asteroid.material_type)
         
         if asteroid.material_type == 'mythicite':
             value = 1000
@@ -289,9 +279,9 @@ def findBestAsteroidforMiner(bodies, miner):
 # returns x and y to go to to get home
 def getHomeValue(miner):
     # move to the player's home
-    print('\nturn:', miner.owner.money)
-    print("this is home base x:", miner.owner.home_base.x)
-    print("this is home base y:", miner.owner.home_base.y, '\n')
+    # print('\nturn:', miner.owner.money)
+    # print("this is home base x:", miner.owner.home_base.x)
+    # print("this is home base y:", miner.owner.home_base.y, '\n')
     
     return getAdvanceCoords(miner, miner.owner.home_base.x, miner.owner.home_base.y)
     
