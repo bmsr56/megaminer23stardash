@@ -2,8 +2,11 @@
 
 from joueur.base_ai import BaseAI
 
-# Custom imports
-from tbow_classes import Stardash
+import math
+
+
+# CONSTANTS
+MAX_MOVE = 64
 
 # <<-- Creer-Merge: imports -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
 # you can add additional import(s) here
@@ -67,7 +70,9 @@ class AI(BaseAI):
         # <<-- Creer-Merge: end -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
         # replace with your end logic
         # <<-- /Creer-Merge: end -->>
+    
     def run_turn(self):
+
         """ This is called every time it is this AI.player's turn.
 
         Returns:
@@ -76,12 +81,92 @@ class AI(BaseAI):
         # <<-- Creer-Merge: runTurn -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
         # Put your game logic here for runTurn
 
-        sd = Stardash(self.body, self.game, self.job, self.player,
-                        self.projectile, self.unit)
+        # NOTE We start with 3 miners on our home planet
         
+        # Organize our units so that we can manipulate them easier
+        miners = []
+        transports = []
+        corvettes = []
+        martyrs = []
+        missileboats = []
+
+        for unit in self.player.units:
+            if unit.job.title == 'miner':
+                miners.append(unit)
+            elif unit.job.title == 'transport':
+                transports.append(unit)
+            elif unit.job.title == 'corvette':
+                corvettes.append(unit)
+            elif unit.job.title == 'martyr':
+                martyrs.append(unit)
+            elif unit.job.title == 'missileboat':
+                missileboats.append(unit)
+        
+        # Move a miner
+        miner = miners[0]
+        vpAsteroid = self.game.bodies[4]
+        sun = self.game.bodies[2]
+
+        # move all the miners to the belt
+        count = 0
+        for miner in miners:
+            print('\ncount: ', count)
+            count += 1
+            targetX, targetY = findTarget(miner)
+
+            x, y = moveToTarget(miner, targetX, targetY)
+            if x > 32:
+                x = 32
+            if y > 32:
+                y = 32
+            # miner.move(x, y)
+            miner.move(miner.x+64, miner.y+y)
+
+
+
+        print(sun.x, sun.y)
+        # miner.move(miner.x + 1, miner.y)
+        
+        if self.game.current_turn > 4:
+            quit = 4/0
+
         return True
         # <<-- /Creer-Merge: runTurn -->>
 
     # <<-- Creer-Merge: functions -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
     # if you need additional functions for your AI you can add them here
     # <<-- /Creer-Merge: functions -->>
+
+# NOTE how to spawn a piece
+# call self.player.home_base.body.spawn(x, y, title)
+
+def moveToCenter(unit):
+    xCenter = 1600
+    yCenter = 900
+    
+    # if we are on the left side
+    if xCenter < unit.x:
+        x = math.sqrt(unit.x - xCenter)
+        y = math.sqrt(unit.y - yCenter)
+    else:
+        x = math.sqrt(unit.x + xCenter)
+        y = math.sqrt(unit.y + yCenter)
+
+    return x, y
+
+def moveToTarget(unit, targetX, targetY):
+    print('unit\t', unit.x, unit.y)
+    print('target\t', targetX, targetY)
+    xDiff = targetX - unit.x
+    yDiff = targetY - unit.y
+    print('diff:', xDiff, yDiff)
+    try:
+        theta = math.tan(float(xDiff)/float(yDiff))
+    except ZeroDivisionError:
+        theta = 0
+    targetX = MAX_MOVE * math.acos(theta)
+    targetY = MAX_MOVE * math.asin(theta)
+    return targetX, targetY
+
+def findTarget(unit):
+    return 500, 900
