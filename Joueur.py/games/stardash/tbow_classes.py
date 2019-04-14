@@ -1,6 +1,17 @@
 # TheBirdsOfWar
 # Classes
-
+class Stardash:
+    def __init__(self, body, game, job, player, projectile, unit):
+        self.body = body
+        self.game = game
+        self.job = job
+        self.player = player
+        self.projectile = projectile 
+        self.unit = unit
+        
+    def do_something(self):
+        pass
+        
 class Corvette:
     """Shoots Lasers that can attack missiles.
     """

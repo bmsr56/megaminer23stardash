@@ -33,7 +33,7 @@ class AI(BaseAI):
             str: The name of your Player.
         """
         # <<-- Creer-Merge: get-name -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
-        return "Stardash Python Player" # REPLACE THIS WITH YOUR TEAM NAME
+        return "TheBirdsOfWar" # REPLACE THIS WITH YOUR TEAM NAME
         # <<-- /Creer-Merge: get-name -->>
 
     def start(self):
@@ -72,6 +72,8 @@ class AI(BaseAI):
         """
         # <<-- Creer-Merge: runTurn -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
         # Put your game logic here for runTurn
+
+        
         return True
         # <<-- /Creer-Merge: runTurn -->>
 
