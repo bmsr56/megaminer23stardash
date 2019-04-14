@@ -164,9 +164,9 @@ def moveToTarget(unit, targetX, targetY):
         theta = math.tan(float(xDiff)/float(yDiff))
     except ZeroDivisionError:
         theta = 0
-    targetX = MAX_MOVE * math.acos(theta)
-    targetY = MAX_MOVE * math.asin(theta)
-    return targetX, targetY
+    moveTox = MAX_MOVE * math.acos(theta)
+    moveToy = MAX_MOVE * math.asin(theta)
+    return moveTox, targetY
 
 def findTarget(unit):
     return 500, 900

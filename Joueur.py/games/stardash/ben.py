@@ -15,3 +15,5 @@ def create_ravens(player):
             player.home_base.spawn(player.home_base.x, player.home_base.y, 'martyr')
             # move martyr to defense line
 
+def escort_sparrows():
+    
