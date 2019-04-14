@@ -96,9 +96,7 @@ class AI(BaseAI):
         martyrs = []
         missileboats = []
         
-        if self.player.money > 150:
-                self.player.home_base.spawn(self.player.home_base.x, self.player.home_base.y, 'transport')
-
+        
         for unit in self.player.units:
             if unit.job.title == 'miner':
                 miners.append(unit)
@@ -111,6 +109,11 @@ class AI(BaseAI):
             elif unit.job.title == 'missileboat':
                 missileboats.append(unit)
         
+        print('number of transports: ', len(transports))
+        if self.player.money > 150 and len(transports) < 3:
+            self.player.home_base.spawn(self.player.home_base.x, self.player.home_base.y, 'transport')
+
+
         for transport in transports:
             x, y = 0, 0
             if checkFullPayload(transport):
@@ -128,18 +131,22 @@ class AI(BaseAI):
                 else:
                     # this is the left side
                     if transport.x <= MIN_ASTROID_BOUND:
-                        print('looking for best asteroid -> left')
                         x, y = getAdvanceCoords(transport, MIN_ASTROID_BOUND, SUN_Y) 
             transport.move(transport.x+x, transport.y+y)
             
 
         # move all the miners to the belt
         for miner in miners:
+            x , y = 0, 0
             needMine = False
             body = None
             if checkFullPayload(miner):
                 # if payload is full go home
-                x, y = getHomeValue(miner)
+                # if payload is full and there are no transports
+                if len(transports) == 0:
+                    x, y = getHomeValue(miner)
+                else:
+                    dumpMaterials(transports, miner)
             else: 
                 # means still has room to mine
                 # head to "target location" -> closer to the asteroid belt
@@ -163,9 +170,9 @@ class AI(BaseAI):
                     else:
                         x, y = getAdvanceCoords(miner, MIN_ASTROID_BOUND, SUN_Y)
                         
-            # make the miner move 
+            # make the miner move
             miner.move(miner.x+x, miner.y+y)
-            if needMine:
+            if needMine and body != None:
                 miner.mine(body)
                 print('asteroid has been mined!!!')
                 print(miner.genarium + miner.legendarium + miner.mythicite + miner.rarium)
@@ -191,6 +198,24 @@ class AI(BaseAI):
         # return val
     # else:
         #  return -val
+
+def dumpMaterials(transports, miner):
+    print('len(transports)', len(transports))
+    for transport in transports:
+        print(transport.x, MIN_ASTROID_BOUND, MAX_ASTROID_BOUND)
+        print(miner.x, (transport.genarium + transport.legendarium + transport.mythicite + transport.rarium))
+        if MIN_ASTROID_BOUND < transport.x and transport.x < MAX_ASTROID_BOUND:
+            if not checkFullPayload(transport):
+                transport.transfer(miner, miner.genarium, 'genarium')
+            if not checkFullPayload(transport):
+                transport.transfer(miner, miner.legendarium, 'legendarium')
+            if not checkFullPayload(transport):
+                transport.transfer(miner, miner.mythicite, 'mythicite')
+            if not checkFullPayload(transport):
+                transport.transfer(miner, miner.rarium, 'rarium')
+        print('transport dumpCheck:', (transport.genarium + transport.legendarium + transport.mythicite + transport.rarium))
+
+            
 
 def getAdvanceCoords(unit, targetX, targetY):
     # print('unit\t', unit.x, unit.y)
@@ -221,6 +246,7 @@ def findBestAsteroidforMiner(bodies, miner):
     possibleTargets = []
     bestAsteroid = None
     bestValue = 0
+    bestTargetX,bestTargetY = 0,0
 
     # find the asteroids in the list that are possible to move to in this turn
     for asteroid in asteroids:
