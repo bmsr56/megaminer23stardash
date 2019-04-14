@@ -8,6 +8,11 @@ import math
 
 # CONSTANTS
 MAX_MOVE = 64
+MIN_ASTROID_BOUND = 868
+MAX_ASTROID_BOUND = 2332
+
+SUN_X = 1600
+SUN_Y = 900
 
 # <<-- Creer-Merge: imports -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
 # you can add additional import(s) here
@@ -90,6 +95,9 @@ class AI(BaseAI):
         corvettes = []
         martyrs = []
         missileboats = []
+        
+        if self.player.money > 150:
+                self.player.home_base.spawn(self.player.home_base.x, self.player.home_base.y, 'transport')
 
         for unit in self.player.units:
             if unit.job.title == 'miner':
@@ -103,21 +111,32 @@ class AI(BaseAI):
             elif unit.job.title == 'missileboat':
                 missileboats.append(unit)
         
-        
-        # Move a miner
-        miner = miners[0]
-        vpAsteroid = self.game.bodies[4]
-        sun = self.game.bodies[2]
+        for transport in transports:
+            x, y = 0, 0
+            if checkFullPayload(transport):
+                # if payload is full go home
+                x, y = getHomeValue(transport)
+            else:
+                # means still has room to mine
+                # head to "target location" -> closer to the asteroid belt
+                print('transport.x: ', transport.x)
+                if transport.x > SUN_X:
+                    # this is the right side
+                    if transport.x >= MAX_ASTROID_BOUND:
+                        # already where it needs to go
+                        x, y = getAdvanceCoords(transport, MAX_ASTROID_BOUND, SUN_Y)
+                else:
+                    # this is the left side
+                    if transport.x <= MIN_ASTROID_BOUND:
+                        print('looking for best asteroid -> left')
+                        x, y = getAdvanceCoords(transport, MIN_ASTROID_BOUND, SUN_Y) 
+            transport.move(transport.x+x, transport.y+y)
+            
 
         # move all the miners to the belt
-        count = 0
         for miner in miners:
             needMine = False
             body = None
-
-
-            x, y, body = findBestAsteroidforMiner(self.game.bodies, miner)
-
             if checkFullPayload(miner):
                 # if payload is full go home
                 x, y = getHomeValue(miner)
@@ -125,24 +144,24 @@ class AI(BaseAI):
                 # means still has room to mine
                 # head to "target location" -> closer to the asteroid belt
                 print('miner.x: ', miner.x)
-                if miner.x > 1600:
+                if miner.x > SUN_X:
                     # this is the right side
                     print('miner.x: ', miner.x)
-                    if miner.x < 2000:
+                    if miner.x < MAX_ASTROID_BOUND:
                         print('looking for best asteroid -> right')
                         x, y, body = findBestAsteroidforMiner(self.game.bodies, miner)
                         needMine = True 
                         print('x:', x, '  y:', y)
                     else:
-                        x, y = getAdvanceCoords(miner, 2000, 900)
+                        x, y = getAdvanceCoords(miner, MAX_ASTROID_BOUND, SUN_Y)
                 else:                     
                     # this is the left side
-                    if miner.x > 1350:
+                    if miner.x > MIN_ASTROID_BOUND:
                         print('looking for best asteroid -> left')
                         x, y, body = findBestAsteroidforMiner(self.game.bodies, miner)
                         needMine = True 
                     else:
-                        x, y = getAdvanceCoords(miner, 1350, 900)
+                        x, y = getAdvanceCoords(miner, MIN_ASTROID_BOUND, SUN_Y)
                         
             # make the miner move 
             miner.move(miner.x+x, miner.y+y)
@@ -151,7 +170,7 @@ class AI(BaseAI):
                 print('asteroid has been mined!!!')
                 print(miner.genarium + miner.legendarium + miner.mythicite + miner.rarium)
 
-        if self.game.current_turn > 1:
+        if self.game.current_turn > 150:
             quit = 4/0
 
         return True
@@ -188,8 +207,8 @@ def getAdvanceCoords(unit, targetX, targetY):
         moveToX *= -1
     return moveToX, moveToY
 
-def checkFullPayload(miner):
-    return 20 == (miner.genarium + miner.legendarium + miner.mythicite + miner.rarium)
+def checkFullPayload(unit):
+    return unit.job.carry_limit == (unit.genarium + unit.legendarium + unit.mythicite + unit.rarium)
 
 # given a list of bodies, return target x, target y
 def findBestAsteroidforMiner(bodies, miner):
@@ -203,21 +222,12 @@ def findBestAsteroidforMiner(bodies, miner):
     bestAsteroid = None
     bestValue = 0
 
-    lowX = 100000
-    highX = 0
-
     # find the asteroids in the list that are possible to move to in this turn
-    for asteroid in range(len(asteroids)):
+    for asteroid in asteroids:
 
         #get the x and the y of the asteroid
-        astX = asteroids[asteroid].x
-        astY = asteroids[asteroid].y
-
-        if astX > highX:
-            highX = astX
-        if astX < lowX:
-            lowX = astX
-
+        astX = asteroid.x
+        astY = asteroid.y
 
         # check it against the x and y of our miner
         minerCoord = (minerX,minerY)
@@ -226,43 +236,39 @@ def findBestAsteroidforMiner(bodies, miner):
         
         #save this as a new dist, if this distance is smaller than previous dist, update it and save the asteroid x y
         if dist < 64:
-            possibleTargets.append(asteroids[asteroid])
+            possibleTargets.append(asteroid)
 
-    print('\nlowest and highest ast values:', lowX, highX, '\n')
-
-    for asteroid in range(len(possibleTargets)):
+    for asteroid in possibleTargets:
         #find the asteroid with the highest value, if equivalent, find the shorter distance one
-        print(possibleTargets[asteroid].amount)
-        print(possibleTargets[asteroid].material_type)
-        #print the amount of whatever is on there
-        # if bestValue < possibleTargets[asteroid].amount:
-        #     bestValue = possibleTargets[asteroid].amount
-        #     bestTargetX = possibleTargets[asteroid].x
-        #     bestTargetY = possibleTargets[asteroid].y
-        if possibleTargets[asteroid].material_type == 'mythicite':
+        print("amount of material",asteroid.amount)
+        print("material type", asteroid.material_type)
+        
+        if asteroid.material_type == 'mythicite':
             value = 1000
-        elif possibleTargets[asteroid].material_type == 'legendarium':
+        elif asteroid.material_type == 'legendarium':
             value = 10
-        elif possibleTargets[asteroid].material_type == 'rarium':
+        elif asteroid.material_type == 'rarium':
             value = 5
-        elif possibleTargets[asteroid].material_type == 'generium':
+        elif asteroid.material_type == 'genarium':
             value = 2
         
         if bestValue < value:
             bestValue = value
-            bestTargetX = possibleTargets[asteroid].x
-            bestTargetY = possibleTargets[asteroid].y
-            bestAsteroid = possibleTargets[asteroid]
+            bestTargetX = asteroid.x
+            bestTargetY = asteroid.y
+            bestAsteroid = asteroid
     
     return bestTargetX,bestTargetY, bestAsteroid
 
 # returns x and y to go to to get home
 def getHomeValue(miner):
-    pass
     # move to the player's home
-    print("\nthis is home base:", miner.owner.home_base, '\n')
-
-    return 0, 0
+    print('\nturn:', miner.owner.money)
+    print("this is home base x:", miner.owner.home_base.x)
+    print("this is home base y:", miner.owner.home_base.y, '\n')
     
-         
+    return getAdvanceCoords(miner, miner.owner.home_base.x, miner.owner.home_base.y)
+    
+
+
     
